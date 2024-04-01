@@ -54,7 +54,11 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
         .unwrap()
         .parse::<u64>()
         .unwrap();
-    let data = match tx_args.get_one::<String>(FLAG_DATA).unwrap().as_str() {
+    let data = match tx_args
+        .get_one::<String>(FLAG_DATA)
+        .unwrap_or(&String::from(""))
+        .as_str()
+    {
         "reward" => "reward".to_string(),
         _ => "".to_owned(),
     };
@@ -66,8 +70,8 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
     let Ok(_) = state.add_tx(tx) else {
         panic!("Error adding tx to state");
     };
-    let Ok(_) = state.persist() else {
-        panic!("Error persisting tx");
+    if let Err(err) = state.persist() {
+        panic!("Error persisting tx to disk: {}", err);
     };
     println!("TX successfully added to the ledger");
 }

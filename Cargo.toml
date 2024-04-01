@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 clap_derive = { version = "4.5.4", features = ["debug"] }
+data-encoding = "2.5.0"
+ring = "0.17.8"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.115"
