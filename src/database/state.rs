@@ -1,19 +1,19 @@
-use super::{genesis::Genesis, Account, Tx};
-use data_encoding::HEXUPPER;
-use ring::digest::{Context, Digest, SHA256};
+use crate::database::{block::Block, BlockFS};
+
+use super::{genesis::Genesis, Account, Hash, Tx};
+use data_encoding::HEXLOWER;
 use std::{
     collections::HashMap,
-    io::{BufRead, Read, Seek, Write},
+    io::{BufRead, Write},
+    time,
 };
-
-pub type Snapshot = [u8; 32];
 
 #[derive(Debug)]
 pub struct State {
     balances: HashMap<Account, u64>,
     tx_mempool: Vec<Tx>,
     db_file: std::fs::File,
-    snapshot: Snapshot,
+    latest_block_hash: Hash,
 }
 
 impl State {
@@ -30,7 +30,7 @@ impl State {
         for (account, balance) in genesis.get_balances().iter() {
             balances.insert(account.clone(), *balance);
         }
-        let db_path = cwd.join("src/database/tx.db");
+        let db_path = cwd.join("src/database/block.db");
         let db_file = std::fs::OpenOptions::new()
             .read(true)
             .write(true)
@@ -41,56 +41,68 @@ impl State {
             balances,
             tx_mempool: Vec::new(),
             db_file,
-            snapshot: [0; 32],
+            latest_block_hash: [0; 32],
         };
         let Ok(cloned) = state.db_file.try_clone() else {
             panic!("Error cloning db file");
         };
         let scanner = std::io::BufReader::new(cloned);
         for line in scanner.lines() {
-            let tx: Tx = serde_json::from_str(&line.unwrap()).unwrap();
-            if let Err(err) = state.apply(tx) {
-                println!("Error applying tx: {}", err);
-            }
+            let block_fs: BlockFS = serde_json::from_str(&line.unwrap()).unwrap();
+            let Ok(_) = state.apply_block(block_fs.value) else {
+                panic!("Error applying block");
+            };
+            state.latest_block_hash = block_fs.key;
         }
-        let Ok(_) = state.do_snapshot() else {
-            panic!("Error creating snapshot");
-        };
         state
     }
 
-    pub fn add_tx(&mut self, tx: Tx) -> Result<(), String> {
-        if let Err(err) = self.apply(tx.clone()) {
-            println!("Error adding tx to state: {}", err);
-            return Err(err);
+    pub fn apply_block(&mut self, block: Block) -> Result<(), String> {
+        for tx in block.txs() {
+            self.apply(tx.clone())?;
         }
-        self.tx_mempool.push(tx);
+        Ok(())
+    }
+    pub fn add_block(&mut self, block: Block) -> Result<(), String> {
+        for tx in block.txs() {
+            self.add_tx(tx)?
+        }
+        Ok(())
+    }
+    pub fn add_tx(&mut self, tx: &Tx) -> Result<(), String> {
+        self.apply(tx.clone())?;
+        self.tx_mempool.push(tx.clone());
         Ok(())
     }
 
-    pub fn persist(&mut self) -> Result<Snapshot, String> {
-        let mut mempool = Vec::<Tx>::with_capacity(self.tx_mempool.len());
-        std::mem::swap(&mut self.tx_mempool, &mut mempool);
-        for tx in mempool {
-            let Ok(tx_json) = serde_json::to_string(&tx) else {
-                return Err("Error serializing tx".to_string());
-            };
-            println!("Persisting new TX to disk");
+    pub fn persist(&mut self) -> Result<Hash, String> {
+        let block = Block::new(
+            self.latest_block_hash,
+            time::SystemTime::now()
+                .duration_since(time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            self.tx_mempool.clone(),
+        );
+        let block_hash = block.hash()?;
+        let block_fs = BlockFS {
+            key: block_hash,
+            value: block,
+        };
+        let block_fs_json = serde_json::to_string(&block_fs).unwrap();
+        println!("Persisting new block to disk");
+        println!("Block created {:?}", HEXLOWER.encode(&block_hash));
 
-            let file = &mut self.db_file;
-            if file.write(tx_json.as_bytes()).is_err() {
-                return Err("Error writing to file".to_string());
-            };
-            if file.write(b"\n").is_err() {
-                return Err("Error writing to file".to_string());
-            };
-            self.do_snapshot()?;
-
-            self.tx_mempool.push(tx);
+        if self.db_file.write(block_fs_json.as_bytes()).is_err() {
+            return Err("Error writing to file".to_string());
         }
-        let snapshot = HEXUPPER.encode(&self.snapshot).to_lowercase();
-        println!("Snapshot created {:?}", snapshot);
-        Ok(self.snapshot)
+        if self.db_file.write("\n".as_bytes()).is_err() {
+            return Err("Error writing to file".to_string());
+        }
+        self.latest_block_hash = block_hash;
+        self.tx_mempool.clear();
+
+        Ok(self.latest_block_hash)
     }
 
     pub fn close(&self) {
@@ -118,26 +130,7 @@ impl State {
     pub fn get_balances(&mut self) -> &HashMap<Account, u64> {
         &self.balances
     }
-    pub fn do_snapshot(&mut self) -> Result<(), String> {
-        let Ok(_) = self.db_file.seek(std::io::SeekFrom::Start(0)) else {
-            return Err("Error seeking file".to_string());
-        };
-        let Ok(digest) = self.sha256_digest() else {
-            return Err("Error creating digest".to_string());
-        };
-        let snapshot = digest.as_ref();
-        self.snapshot.copy_from_slice(snapshot);
-        Ok(())
-    }
-    pub fn latest_snapshot(&self) -> String {
-        HEXUPPER.encode(&self.snapshot).to_lowercase()
-    }
-    fn sha256_digest(&self) -> std::io::Result<Digest> {
-        let mut buf = Vec::<u8>::new();
-        let mut txs_data = std::io::BufReader::new(&self.db_file);
-        txs_data.read_to_end(&mut buf).unwrap();
-        let mut context = Context::new(&SHA256);
-        context.update(&buf);
-        Ok(context.finish())
+    pub fn latest_block_hash(&self) -> String {
+        HEXLOWER.encode(&self.latest_block_hash)
     }
 }

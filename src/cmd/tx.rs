@@ -1,4 +1,6 @@
-use crate::database::{new_account, State, Tx};
+use std::time;
+
+use crate::database::{new_account, Block, Hash, State, Tx};
 
 const FLAG_FROM: &str = "from";
 const FLAG_TO: &str = "to";
@@ -64,11 +66,69 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
     };
     let from_account = new_account(from);
     let to_account = new_account(to);
+
     let tx = Tx::new(from_account, to_account, &value, &data);
+    let txs = vec![
+        tx.clone(),
+        Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
+        Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
+        Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
+        Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
+        Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
+        Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
+    ];
     let mut state = State::new_state_from_disk();
     state.close();
-    let Ok(_) = state.add_tx(tx) else {
-        panic!("Error adding tx to state");
+    let parent: Hash = [0; 32];
+    let block = Block::new(
+        parent,
+        time::SystemTime::now()
+            .duration_since(time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
+        txs.clone(),
+    );
+    if let Err(err) = state.add_block(block) {
+        panic!("Error adding block to state: {}", err);
+    };
+    let Ok(block0hash) = state.persist() else {
+        panic!("Error persisting block 0 to disk");
+    };
+
+    let block1 = Block::new(
+        block0hash,
+        time::SystemTime::now()
+            .duration_since(time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
+        vec![
+            Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
+            Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
+            Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
+            Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
+            Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
+            Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
+            Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
+        ],
+    );
+    if let Err(err) = state.persist() {
+        panic!("Error persisting block 1 to disk {}", err);
+    };
+    let _ = state.add_block(block1);
+    let _ = state.persist();
+    if let Err(err) = state.add_tx(&tx) {
+        panic!("Error adding tx to state {}", err);
     };
     if let Err(err) = state.persist() {
         panic!("Error persisting tx to disk: {}", err);

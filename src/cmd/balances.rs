@@ -15,7 +15,7 @@ fn balances_list_cmd() -> clap::Command {
 pub fn get_database_state_from_disk() {
     let mut state = State::new_state_from_disk();
     state.close();
-    println!("Accounts balances at: {:?}", state.latest_snapshot());
+    println!("Accounts balances at: {:?}", state.latest_block_hash());
     println!("__________________");
     println!();
     for (account, balance) in state.get_balances().iter() {

@@ -18,3 +18,5 @@
 {"from":"cerf","to":"eduardo","value":100000,"data":""}
 {"from":"cerf","to":"eduardo","value":100000,"data":""}
 {"from":"cerf","to":"eduardo","value":10000,"data":""}
+{"from":"cerf","to":"eduardo","value":10000,"data":""}
+{"key":[51,50,8,226,163,200,34,139,15,140,236,74,82,27,98,13,178,225,85,254,32,6,117,44,165,183,181,85,128,80,241,172],"block":{"header":{"parent":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"time":1712018705},"payload":[{"from":"cerf","to":"eduardo","value":10000,"data":""}]}}
