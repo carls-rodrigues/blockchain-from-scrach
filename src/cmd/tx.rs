@@ -72,10 +72,7 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
         tx.clone(),
         Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
         Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
-        Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
         Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
-        Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
-        Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
     ];
     let mut state = State::new_state_from_disk();
     state.close();
@@ -104,34 +101,11 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
         vec![
             Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
             Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
-            Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
-            Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
-            Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
-            Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &1, ""),
-            Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &50, ""),
-            Tx::new("cerf".to_string(), "andrej".to_string(), &600, "reward"),
         ],
     );
+    let _ = state.add_block(block1);
     if let Err(err) = state.persist() {
         panic!("Error persisting block 1 to disk {}", err);
-    };
-    let _ = state.add_block(block1);
-    let _ = state.persist();
-    if let Err(err) = state.add_tx(&tx) {
-        panic!("Error adding tx to state {}", err);
-    };
-    if let Err(err) = state.persist() {
-        panic!("Error persisting tx to disk: {}", err);
     };
     println!("TX successfully added to the ledger");
 }
