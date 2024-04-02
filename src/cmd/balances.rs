@@ -22,7 +22,7 @@ fn balances_list_cmd() -> clap::Command {
 
 pub fn get_database_state_from_disk(args: &clap::ArgMatches) {
     let datadir = args.get_one::<String>(FLAG_DATA_DIR).unwrap();
-    let mut state = State::new_state_from_disk(&datadir);
+    let mut state = State::new_state_from_disk(datadir);
     state.close();
     println!("Accounts balances at: {:?}", state.latest_block_hash());
     println!("__________________");
