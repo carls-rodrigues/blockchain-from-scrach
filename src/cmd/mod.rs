@@ -1,6 +1,6 @@
 mod balances;
-mod cmd;
+mod run;
 mod tx;
 pub use balances::*;
-pub use cmd::run_cmd;
+pub use run::*;
 pub use tx::*;

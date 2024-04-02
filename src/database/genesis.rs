@@ -1,6 +1,24 @@
-use std::{collections::HashMap, io::Read};
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+};
 
 use super::Account;
+
+static GENESIS_JSON: &str = r#"
+{
+    "genesis_time": "2019-03-18T00:00:00.000000000Z",
+    "chain_id": "the-blockchain-bar-ledger",
+    "balances": {
+        "andrej": 1000000
+    }
+}
+"#;
+
+pub fn write_genesis_to_disk(path: &str) {
+    let mut file = std::fs::File::create(path).unwrap();
+    file.write_all(GENESIS_JSON.as_bytes()).unwrap();
+}
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct GenesisJson {

@@ -6,6 +6,7 @@ const FLAG_FROM: &str = "from";
 const FLAG_TO: &str = "to";
 const FLAG_VALUE: &str = "value";
 const FLAG_DATA: &str = "data";
+const FLAG_DATA_DIR: &str = "datadir";
 
 pub fn tx_cmd() -> clap::Command {
     let tx_add_cmd = tx_add_cmd();
@@ -33,6 +34,13 @@ fn tx_add_cmd() -> clap::Command {
                 .num_args(1),
         )
         .arg(
+            clap::Arg::new(FLAG_DATA_DIR)
+                .long("datadir")
+                .help("data directory")
+                .required(true)
+                .num_args(1),
+        )
+        .arg(
             clap::Arg::new(FLAG_VALUE)
                 .long("value")
                 .help("Value")
@@ -51,6 +59,7 @@ fn tx_add_cmd() -> clap::Command {
 pub fn add_new_tx(tx_args: &clap::ArgMatches) {
     let from = tx_args.get_one::<String>(FLAG_FROM).unwrap();
     let to = tx_args.get_one::<String>(FLAG_TO).unwrap();
+    let data_dir = tx_args.get_one::<String>(FLAG_DATA_DIR).unwrap();
     let value = tx_args
         .get_one::<String>(FLAG_VALUE)
         .unwrap()
@@ -74,7 +83,7 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
         Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
         Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
     ];
-    let mut state = State::new_state_from_disk();
+    let mut state = State::new_state_from_disk(&data_dir);
     state.close();
     let parent: Hash = [0; 32];
     let block = Block::new(

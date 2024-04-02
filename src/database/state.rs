@@ -1,6 +1,9 @@
 use crate::database::{block::Block, BlockFS};
 
-use super::{genesis::Genesis, Account, Hash, Tx};
+use super::{
+    genesis::Genesis, get_blocks_db_file_path, get_genesis_json_file_path,
+    init_data_dir_if_not_exists, Account, Hash, Tx,
+};
 use data_encoding::HEXLOWER;
 use std::{
     collections::HashMap,
@@ -17,20 +20,19 @@ pub struct State {
 }
 
 impl State {
-    pub fn new_state_from_disk() -> State {
-        let Ok(cwd) = std::env::current_dir() else {
-            panic!("Error getting current directory");
+    pub fn new_state_from_disk(data_dir: &str) -> State {
+        if let Err(err) = init_data_dir_if_not_exists(data_dir) {
+            panic!("State: Error initializing data directory: {:?}", err);
+        }
+        let Ok(genesis_path) = get_genesis_json_file_path(data_dir) else {
+            panic!("State: Error getting genesis file path");
         };
-        let p = cwd.join("src/database/genesis.json");
-        let Some(gen_file_path) = p.to_str() else {
-            panic!("Error getting genesis file path");
-        };
-        let genesis = Genesis::load_genesis(gen_file_path);
+        let genesis = Genesis::load_genesis(&genesis_path);
         let mut balances = HashMap::new();
         for (account, balance) in genesis.get_balances().iter() {
             balances.insert(account.clone(), *balance);
         }
-        let db_path = cwd.join("src/database/block.db");
+        let db_path = get_blocks_db_file_path(data_dir).unwrap();
         let db_file = std::fs::OpenOptions::new()
             .read(true)
             .write(true)

@@ -1,18 +1,6 @@
-use data_encoding::HEXLOWER;
-
 use super::Tx;
 
 pub type Hash = [u8; 32];
-
-fn marshal_text(hash: &Hash) -> String {
-    HEXLOWER.encode(hash).to_ascii_lowercase()
-}
-fn unmarshal_text(data: &str) -> Hash {
-    let mut result = [0u8; 32];
-    let bytes = HEXLOWER.decode(data.as_bytes()).unwrap();
-    result.copy_from_slice(&bytes);
-    result
-}
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Block {

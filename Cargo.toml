@@ -6,9 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-web = "4.5.1"
 clap = { version = "4.5.4", features = ["derive"] }
 clap_derive = { version = "4.5.4", features = ["debug"] }
 data-encoding = "2.5.0"
+env_logger = "0.11.3"
 ring = "0.17.8"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.115"
