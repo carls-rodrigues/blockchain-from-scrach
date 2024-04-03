@@ -182,6 +182,9 @@ impl State {
     pub fn latest_block_hash(&self) -> Hash {
         self.latest_block_hash
     }
+    pub fn latest_block(&self) -> &Option<Block> {
+        &self.latest_block
+    }
     pub fn apply_tx(&mut self, tx: &Tx) -> Result<(), String> {
         println!("Applying tx {:?}", tx);
         let from_balance = self.balances.get(tx.from()).unwrap_or(&0);

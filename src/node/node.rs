@@ -27,6 +27,28 @@ struct TxAddRes {
     hash: String,
 }
 
+#[derive(Debug, serde::Serialize)]
+struct StatusRes {
+    #[serde(rename = "block_hash")]
+    hash: String,
+    #[serde(rename = "block_number")]
+    number: u64,
+}
+
+#[actix_web::get("/node/status")]
+async fn node_status(data_dir: web::Data<String>) -> impl Responder {
+    let state = State::new_state_from_disk(&data_dir);
+    state.close();
+    let block_number = match state.latest_block() {
+        Some(block) => block.header().number(),
+        None => 0,
+    };
+    let output = StatusRes {
+        hash: HEXLOWER.encode(&state.latest_block_hash()),
+        number: block_number,
+    };
+    HttpResponse::Ok().json(output)
+}
 #[actix_web::get("/balances/list")]
 async fn list_balances_handler(data_dir: web::Data<String>) -> impl Responder {
     let state = State::new_state_from_disk(&data_dir);
@@ -78,6 +100,7 @@ pub async fn run(data_dir: &str) -> std::io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .service(list_balances_handler)
+            .service(node_status)
             .service(tx_add_handler)
             .app_data(web::Data::new(data_dir.clone()))
     })
