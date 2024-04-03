@@ -2,7 +2,7 @@ use super::Tx;
 
 pub type Hash = [u8; 32];
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub struct Block {
     header: BlockHeader,
     #[serde(rename = "payload")]
@@ -10,9 +10,13 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn new(parent: Hash, time: u64, tx: Vec<Tx>) -> Self {
+    pub fn new(parent: Hash, time: u64, tx: Vec<Tx>, number: u64) -> Self {
         Self {
-            header: BlockHeader { parent, time },
+            header: BlockHeader {
+                parent,
+                time,
+                number,
+            },
             tx,
         }
     }
@@ -33,12 +37,25 @@ impl Block {
         &self.tx
     }
 }
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub struct BlockHeader {
     parent: Hash,
+    number: u64,
     time: u64,
 }
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+
+impl BlockHeader {
+    pub fn parent(&self) -> &Hash {
+        &self.parent
+    }
+    pub fn number(&self) -> u64 {
+        self.number
+    }
+    pub fn time(&self) -> u64 {
+        self.time
+    }
+}
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BlockFS {
     pub key: Hash,
     #[serde(rename = "block")]

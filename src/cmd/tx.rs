@@ -83,7 +83,7 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
         Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
         Tx::new("cerf".to_string(), "caesar".to_string(), &1000, ""),
     ];
-    let mut state = State::new_state_from_disk(&data_dir);
+    let mut state = State::new_state_from_disk(data_dir);
     state.close();
     let parent: Hash = [0; 32];
     let block = Block::new(
@@ -93,6 +93,7 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
             .unwrap()
             .as_secs(),
         txs.clone(),
+        0,
     );
     if let Err(err) = state.add_block(block) {
         panic!("Error adding block to state: {}", err);
@@ -111,6 +112,7 @@ pub fn add_new_tx(tx_args: &clap::ArgMatches) {
             Tx::new("cerf".to_string(), "babayaga".to_string(), &2000, ""),
             Tx::new("cerf".to_string(), "andrej".to_string(), &100, "reward"),
         ],
+        1,
     );
     let _ = state.add_block(block1);
     if let Err(err) = state.persist() {

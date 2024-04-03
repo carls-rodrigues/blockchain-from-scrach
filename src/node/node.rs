@@ -29,11 +29,11 @@ struct TxAddRes {
 
 #[actix_web::get("/balances/list")]
 async fn list_balances_handler(data_dir: web::Data<String>) -> impl Responder {
-    let mut state = State::new_state_from_disk(&data_dir);
+    let state = State::new_state_from_disk(&data_dir);
     state.close();
     let output = BalanceRes {
         balances: state.get_balances().clone(),
-        hash: state.latest_block_hash(),
+        hash: HEXLOWER.encode(&state.latest_block_hash()),
     };
     HttpResponse::Ok().json(output)
 }
